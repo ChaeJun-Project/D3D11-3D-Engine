@@ -164,9 +164,6 @@
     <ClCompile Include="Utility\Geometry_Generator.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="NatvisFile.natvis" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
