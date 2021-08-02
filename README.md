@@ -29,8 +29,10 @@ chaw109@naver.com
 # [유튜브 영상 URL]
 https://youtu.be/gToq3WTeZrw
 
-# [프로젝트 파일]
-https://drive.google.com/file/d/1qZexpNQtMXDDBEY-UJL4JC9qns0XPR5V/view?usp=sharing
+# [라이브러리 및 리소스 파일]
+https://drive.google.com/file/d/1hy3TYsPovSSN0ya31rJpRdXOg0cUs33R/view?usp=sharing
+
+※해당 파일을 압축 해제 후 _Assets, _Libraries, _Project 폴더를 프로젝트 파일 최상단 루트에 위치시킴(../Project_File_location)
 
 # [리소스 출처]
 3D Model & Animation: https://www.mixamo.com/ (3D 무료 에셋)
