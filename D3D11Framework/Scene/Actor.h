@@ -43,11 +43,6 @@ public:
 	template <typename T>
 	auto GetComponent_Raw() -> T*;
 
-	template <typename T>
-	auto GetComponents() -> std::vector<std::shared_ptr<T>>;
-
-	auto GetAllComponents() const ->const std::vector<std::shared_ptr<IComponent>>& {return components;}
-
 	auto HasComponent(const ComponentType& type) -> const bool;
 
 	template <typename T>
@@ -56,6 +51,8 @@ public:
 	template <typename T>
 	void RemoveComponent();
 
+	auto RemoveComponent(const ComponentType& type) -> const bool;
+
 private:
 	class Context* context = nullptr;
 	std::string name = NOT_ASSIGNED_STR;
@@ -63,20 +60,24 @@ private:
 
 	std::shared_ptr<class Transform> transform;
 	std::shared_ptr<class Renderable> renderable;
-	std::vector<std::shared_ptr<IComponent>> components;
+	std::list<std::shared_ptr<IComponent>> components_list;
 };
 
 template<typename T>
 inline auto Actor::AddComponent() -> std::shared_ptr<T>
 {
-    static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
-	
-	auto type=IComponent::DeduceComponentType<T>();
+	//타입 T가 IComponent를 상속받는 파생클래스일 경우 참 반환
+	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
 
+	//타입 T의 타입을 반환
+	auto type = IComponent::DeduceComponentType<T>();
+
+	//타입 T가 이미 components_list에 존재하고 Script가 아닌 경우
 	if(HasComponent(type) && type != ComponentType::Script)
-	  return GetComponent<T>();
+	  return GetComponent<T>(); //타입 T 반환
 
-    components.emplace_back
+	//components_list 맨 뒤에 타입 T 요소 추가
+	components_list.push_back
 	(
 		std::make_shared<T>
 		(
@@ -86,32 +87,39 @@ inline auto Actor::AddComponent() -> std::shared_ptr<T>
 		)
 	);
 
-	auto new_component=std::static_pointer_cast<T>(components.back());
+	//가장 최근에 추가한 component 참조
+	auto new_component = std::dynamic_pointer_cast<T>(components_list.back());
 
+	//component 타입 설정
 	new_component->SetComponentType(type);
 
-	//if constexpr: 뒤의 else 문을 판별하지 않고 넘어감
+	//타입 T가 Renderable와 같은 경우
 	if constexpr (std::is_same<T, Renderable>::value)
 	{
+	    //renderable에 해당 component 참조
 		renderable = new_component;
 	}
 
 	WORK_EVENT(EventType::Scene_Refresh);
 
+	//새로 추가한 컴퍼넌트 반환
 	return new_component;
 }
 
 template<typename T>
 inline auto Actor::GetComponent() -> std::shared_ptr<T>
 {
+	//타입 T가 IComponent를 상속받는 파생클래스일 경우 참 반환
 	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
 
+	//타입 T의 타입을 반환
 	auto type = IComponent::DeduceComponentType<T>();
 
-	for (const auto& component : components)
+	//components_list를 순회하여 타입 T에 해당하는 component 반환
+	for (auto& component : components_list)
 	{
-		if(component->GetComponentType()==type)
-		   return std::static_pointer_cast<T>(component);
+		if(component->GetComponentType() == type)
+		   return std::dynamic_pointer_cast<T>(component);
 	}
 
 	return nullptr;
@@ -120,61 +128,53 @@ inline auto Actor::GetComponent() -> std::shared_ptr<T>
 template<typename T>
 inline auto Actor::GetComponent_Raw() -> T *
 {
+	//타입 T가 IComponent를 상속받는 파생클래스일 경우 참 반환
 	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
 
+	//타입 T의 타입을 반환
 	auto type = IComponent::DeduceComponentType<T>();
 
-	for (const auto& component : components)
+	//components_list를 순회하여 타입 T에 해당하는 component의 포인터 반환
+	for (auto& component : components_list)
 	{
 		if (component->GetComponentType() == type)
-			return std::static_pointer_cast<T>(component).get();
+			return std::dynamic_pointer_cast<T>(component).get();
 	}
 
 	return nullptr;
 }
 
 template<typename T>
-inline auto Actor::GetComponents() -> std::vector<std::shared_ptr<T>>
-{
-	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
-
-	auto type = IComponent::DeduceComponentType<T>();
-
-	std::vector<std::shared_ptr<T>> temp_components;
-
-	for (const auto& component : components)
-	{
-		if (component->GetComponentType() != type)
-		   continue;
-
-		temp_components.emplace_back(std::static_pointer_cast<T>(component));
-	}
-
-	return temp_components;
-}
-
-template<typename T>
 inline auto Actor::HasComponent() -> const bool
 {
+	//타입 T가 IComponent를 상속받는 파생클래스일 경우 참 반환
 	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
+
+	//타입 T의 타입을 반환
+	auto type = IComponent::DeduceComponentType<T>();
 	
-	return HasComponent(IComponent::DeduceComponentType<T>());
+	return HasComponent(type);
 }
 
 template<typename T>
 inline void Actor::RemoveComponent()
 {
+	//타입 T가 IComponent를 상속받는 파생클래스일 경우 참 반환
 	static_assert(std::is_base_of<IComponent, T>::value, "Provider type does not implement IComponent");
 
+	//타입 T의 타입을 반환
 	auto type = IComponent::DeduceComponentType<T>();
 
-	for (auto iter = components.begin(); iter != components.end();)
+	//components_list를 순회하여 타입 T에 해당하는 component 삭제
+	for (auto iter = components_list.begin(); iter != components_list.end();)
 	{
-		auto component=*iter;
+		auto component = *iter;
+
 		if (component->GetComponentType() == type)
 		{
 			component.reset();
-			iter=components.erase(iter);
+
+			iter = components_list.erase(iter); //현재 참조자의 위치에 해당하는 요소를 삭제 후 다음 참조자의 위치를 현재 참조자에게 전달 
 		}
 
 		else 

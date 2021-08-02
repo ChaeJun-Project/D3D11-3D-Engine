@@ -29,6 +29,7 @@
     <ClInclude Include="ImGui\TextEditor.h" />
     <ClInclude Include="Helper\FileDialog.h" />
     <ClInclude Include="Helper\ScriptEditor.h" />
+    <ClInclude Include="Helper\ImGui_Helper.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp" />

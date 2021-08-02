@@ -7,11 +7,15 @@
 //갱신되고 그것을 D3D11Engine에서 사용함(라이브러리 링크)
 #pragma comment(lib, "D3D11Framework.lib")
 
+//Imgui (참고: https://github.com/ocornut/imgui)
 #include "ImGui/Source/imgui.h" //ImGui의 헤더들은 반드시 imgui.h보다 뒤에 포함되어야 하므로 가장 앞에 포함
 #include "ImGui/Source/imgui_internal.h"
 #include "ImGui/Source/imgui_stdlib.h"
+#include "ImGui/imgui_impl_win32.h"
+#include "ImGui/imgui_impl_dx11.h"
 
 //Helper
+#include "Helper/ImGui_Helper.h"
 #include "Helper/Editor_Helper.h"
 #include "Helper/Icon_Provider.h"
 #include "Helper/DragDropEvent.h"

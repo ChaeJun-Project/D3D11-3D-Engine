@@ -86,7 +86,7 @@ const bool Graphics::Initialize()
 	//=========================================================================================
 
 	CreateSwapChain(); //SwapChain 생성
-	CreateRenderTargetView(); //RenderTargetView 생성
+	
 	Resize
 	(
 		static_cast<uint>(Settings::Get().GetWidth()),
@@ -117,8 +117,10 @@ void Graphics::Resize(const uint & width, const uint & height)
 		assert(SUCCEEDED(hr));
 	}
 
+	//RenderTargetView 생성
 	CreateRenderTargetView();
 
+	//Viewport 설정
 	SetViewport(width, height);
 }
 
@@ -133,17 +135,21 @@ void Graphics::SetViewport(const uint & width, const uint & height)
 
 }
 
-//새로 그리는 곳
+//백 버퍼를 새로 그림
 void Graphics::BeginScene()
 {
+	//백 버퍼에 그려진 내용(render_target_view)을 Output_Merger의 렌더타겟으로 설정
 	device_context->OMSetRenderTargets(1, &render_target_view, nullptr);
+    //설정한 뷰포트 등록
 	device_context->RSSetViewports(1, &viewport);
+	//백 버퍼(render_target_view) 클리어
 	device_context->ClearRenderTargetView(render_target_view, clear_color);
 }
 
-//그린 것을 앞으로 출력하는 곳
+//뒤에서 그린 것을 앞으로 출력
 void Graphics::EndScene()
 {
+    //백 버퍼에 그린 내용을 전면 버퍼로 전송
 	auto hr = swap_chain->Present(Settings::Get().IsVsync() ? 1 : 0, 0);
 	assert(SUCCEEDED(hr));
 }
@@ -161,7 +167,7 @@ void Graphics::CreateSwapChain()
 	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-	desc.BufferCount = 1;
+	desc.BufferCount = 1; //백버퍼
 	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	//Sample:특정 데이터를 추출
 	//현재는 사용하지 않음

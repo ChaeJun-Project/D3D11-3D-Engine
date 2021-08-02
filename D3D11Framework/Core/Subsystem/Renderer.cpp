@@ -73,7 +73,7 @@ void Renderer::SetResolution(const uint & width, const uint & height)
 
 	CreateRenderTextures();
 
-	LOG_INFO_F("Resolution set to %dx%d", width, height);
+	LOG_INFO_F("Resolution Scene Size to %dx%d", width, height);
 }
 
 void Renderer::AcquireRenderables(Scene * scene)

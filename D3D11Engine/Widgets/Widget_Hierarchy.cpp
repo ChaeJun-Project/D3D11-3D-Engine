@@ -40,7 +40,7 @@ void Widget_Hierarchy::Render()
 
 void Widget_Hierarchy::ShowHierarchy()
 {
-	Hierarchy_Data::current_scene = Editor_Helper::Get().scene_manager->GetCurrentScene();
+	Hierarchy_Data::current_scene = Editor_Helper::GetInstance()->scene_manager->GetCurrentScene();
 
 	//ImGuiTreeNodeFlags_DefaultOpen : 시작부터 하위노드를 다 보여주는 옵션
 	if (ImGui::CollapsingHeader(Hierarchy_Data::current_scene->GetName().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -103,7 +103,7 @@ void Widget_Hierarchy::AddActor(const std::shared_ptr<class Actor>& actor)
 	//ImGuiTreeNodeFlags_OpenOnArrow : 화살표를 on했을때만 open하는 플래그
 	flags |= childs.empty() ? ImGuiTreeNodeFlags_Leaf : ImGuiTreeNodeFlags_OpenOnArrow;
 
-	if (const auto selected_actor = Editor_Helper::Get().selected_actor.lock())
+	if (const auto selected_actor = Editor_Helper::GetInstance()->selected_actor.lock())
 	{
 		const auto is_selected = selected_actor->GetID() == actor->GetID();
 		flags |= is_selected ? ImGuiTreeNodeFlags_Selected : ImGuiTreeNodeFlags_None;
@@ -154,7 +154,7 @@ void Widget_Hierarchy::ClickedItem()
 void Widget_Hierarchy::SelectedItem(const std::shared_ptr<class Actor>& actor)
 {
 	is_expand_to_show_actor = true;
-	Editor_Helper::Get().selected_actor = actor;
+	Editor_Helper::GetInstance()->selected_actor = actor;
 }
 
 auto Widget_Hierarchy::CreateEmptyActor() -> std::shared_ptr<class Actor>
@@ -172,28 +172,28 @@ auto Widget_Hierarchy::CreateEmptyActor() -> std::shared_ptr<class Actor>
 
 void Widget_Hierarchy::CreateStandardMesh(const MeshType & mesh_type)
 {
-	const auto directory = Editor_Helper::Get().resource_manager->GetAssetDirectory(AssetType::Model);
+	const auto directory = Editor_Helper::GetInstance()->resource_manager->GetAssetDirectory(AssetType::Model);
 
 	switch (mesh_type)
 	{
 	case MeshType::Cube:
 	{
-		Editor_Helper::Get().LoadModel(directory + "Cube_Mesh.fbx");
+		Editor_Helper::GetInstance()->LoadModel(directory + "Cube_Mesh.fbx");
 		break;
 	}
 	case MeshType::Sphere:
 	{
-		Editor_Helper::Get().LoadModel(directory + "Sphere_Mesh.fbx");
+		Editor_Helper::GetInstance()->LoadModel(directory + "Sphere_Mesh.fbx");
 		break;
 	}
 	case MeshType::Plane:
 	{
-		Editor_Helper::Get().LoadModel(directory + "Plane_Mesh.fbx");
+		Editor_Helper::GetInstance()->LoadModel(directory + "Plane_Mesh.fbx");
 		break;
 	}
 	case MeshType::Capsule:
 	{
-		Editor_Helper::Get().LoadModel(directory + "Capsule_Mesh.fbx");
+		Editor_Helper::GetInstance()->LoadModel(directory + "Capsule_Mesh.fbx");
 		break;
 	}
 	}

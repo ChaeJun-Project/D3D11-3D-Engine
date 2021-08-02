@@ -1,6 +1,18 @@
 #pragma once
 #include "ISubsystem.h"
 
+
+//Lamda
+//람다식, 람다함수, 무명함수
+
+// [변수캡쳐](파라미터) -> 리턴타입 { 함수 구현 }(넘길 인자)
+
+//변수캡쳐  : 현재 함수에서 사용하는 외부 변수들
+// = 을 사용하면 해당함수의 모든 변수 전부 사용
+// & 을 사용하면 모든 변수를 참조로 받음
+// 전역변수는 캡쳐할 필요없음
+
+
 enum RendererOption : uint
 {
 	RendererOption_AABB = 1U << 0,

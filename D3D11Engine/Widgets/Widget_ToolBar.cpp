@@ -73,7 +73,7 @@ void Widget_ToolBar::Render()
 
 void Widget_ToolBar::ShowOptions()
 {
-	auto renderer = Editor_Helper::Get().renderer;
+	auto renderer = Editor_Helper::GetInstance()->renderer;
 
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, window_alpha);
 	ImGui::Begin("Renderer Options", &is_show_options, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoDocking);

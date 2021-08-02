@@ -1,7 +1,5 @@
 #include "stdafx.h"
 #include "Editor.h"
-#include "ImGui/imgui_impl_win32.h"
-#include "ImGui/imgui_impl_dx11.h"
 #include "Widgets/Widget_MenuBar.h"
 #include "Widgets/Widget_ToolBar.h"
 #include "Widgets/Widget_Console.h"
@@ -11,50 +9,56 @@
 #include "Widgets/Widget_Scene.h"
 #include "Widgets/Widget_ProgressBar.h"
 
+//ImGui 옵션에 도킹을 추가했을 경우 true값 반환
 #define DOCKING_ENABLED ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_DockingEnable
-
-namespace _Editor
-{
-	IWidget* menu_bar = nullptr;
-	IWidget* tool_bar = nullptr;
-}
 
 Editor::Editor()
 {
+	//Engine 객체 생성
 	engine = std::make_unique<Engine>();
+	//Context 참조
 	context = engine->GetContext();
+	//Graphics 참조
 	graphics = context->GetSubsystem<Graphics>();
 
+	//ImGui 버전 체크
 	IMGUI_CHECKVERSION();
+
+	//ImGui Context 생성
 	ImGui::CreateContext();
 
+	//ImGui Context 설정
 	auto& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
-	io.ConfigViewportsNoTaskBarIcon = true;
-	io.ConfigWindowsResizeFromEdges = true;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; //키보드 입력 사용
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; //도킹 시스템 사용
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; //멀티 뷰포트 사용(윈도우 플랫폼)
+	io.ConfigViewportsNoTaskBarIcon = true; //OS에서 제공하는 기본 아이콘 사용
+	io.ConfigWindowsResizeFromEdges = true; //윈도우 창 크기 변경 사용
 
+	//ImGui에 윈도우 핸들값 전달
 	ImGui_ImplWin32_Init(Settings::Get().GetWindowHandle());
+	//ImGui에 D3D11 Device 객체와 D3D11 DeviceContext 객체 정보 전달
 	ImGui_ImplDX11_Init(graphics->GetDevice(), graphics->GetDeviceContext());
+
+	//Set GUI Style(Current: Standard Color)
 	ApplyStyle();
 
-	Editor_Helper::Get().Initialize(context);
+	//Editor_Helper 초기화
+	Editor_Helper::GetInstance()->Initialize(context);
+	//Icon_Provider 초기화
 	Icon_Provider::Get().Initialize(context);
+	//ScriptEditor 초기화
 	ScriptEditor::Get().Initialize(context);
 
-	widgets.emplace_back(std::make_unique<Widget_MenuBar>(context));
-	_Editor::menu_bar = widgets.back().get();
-
-	widgets.emplace_back(std::make_unique<Widget_ToolBar>(context));
-	_Editor::tool_bar = widgets.back().get();
-
-	widgets.emplace_back(std::make_unique<Widget_Console>(context));
-	widgets.emplace_back(std::make_unique<Widget_Hierarchy>(context));
-	widgets.emplace_back(std::make_unique<Widget_Inspector>(context));
-	widgets.emplace_back(std::make_unique<Widget_Project>(context));
-	widgets.emplace_back(std::make_unique<Widget_Scene>(context));
-	widgets.emplace_back(std::make_unique<Widget_ProgressBar>(context));
+	//Add GUI Widgets
+	widgets.emplace_back(std::make_unique<Widget_MenuBar>(context));	 //Menu_Bar
+	widgets.emplace_back(std::make_unique<Widget_ToolBar>(context));	 //Tool_Bar
+	widgets.emplace_back(std::make_unique<Widget_Console>(context));	 //Console(Log)
+	widgets.emplace_back(std::make_unique<Widget_Hierarchy>(context));	 //Hierarchy
+	widgets.emplace_back(std::make_unique<Widget_Inspector>(context));	 //Inspector
+	widgets.emplace_back(std::make_unique<Widget_Project>(context));	 //Project
+	widgets.emplace_back(std::make_unique<Widget_Scene>(context));		 //Scene
+	widgets.emplace_back(std::make_unique<Widget_ProgressBar>(context)); //Progress
 }
 
 Editor::~Editor()
@@ -62,8 +66,21 @@ Editor::~Editor()
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
 	ImGui::DestroyContext();
+
+	//widgets 벡터 요소 메모리 해제 및 벡터 클리어
+	for (auto& widget : widgets)
+	{
+		widget.release();
+	}
+	widgets.clear();
+	widgets.shrink_to_fit();
+
+	//context는 engine 객체 소멸시 메모리 해제됨
+	//graphics는 context 객체 소멸시 메모리 해제됨
+	engine.release();
 }
 
+//윈도우창 사이즈 조정
 void Editor::Resize(const uint & width, const uint & height)
 {
 	if (graphics)
@@ -73,21 +90,30 @@ void Editor::Resize(const uint & width, const uint & height)
 	ImGui_ImplDX11_CreateDeviceObjects();
 }
 
+//매 프레임 업데이트
 void Editor::Update()
 {
+	//D3D11 Framework Update
 	engine->Update();
 }
 
+//매 프레임 렌더링
 void Editor::Render()
 {
+	//백 버퍼를 새로 그림
 	graphics->BeginScene();
+
 	{
 		ImGui_ImplDX11_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 
-		if (DOCKING_ENABLED) BeginDockspace();
+		//도킹 시스템을 사용하는 경우
+		if (DOCKING_ENABLED)
 		{
+			BeginDockspace();   //도킹 시작
+
+			//GUI Render
 			for (const auto& widget : widgets)
 			{
 				widget->Begin();
@@ -95,19 +121,26 @@ void Editor::Render()
 				widget->End();
 			}
 
-			ScriptEditor::Get().Render();
+			ScriptEditor::Get().Render(); //ScriptEditor Render
 		}
-		if (DOCKING_ENABLED) EndDockspace();
+
+
+		//도킹 시스템을 사용하는 경우
+		if (DOCKING_ENABLED)
+			EndDockspace();  //도킹 종료
 
 		ImGui::Render();
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+
+		//도킹 시스템을 사용하는 경우
 		if (DOCKING_ENABLED)
 		{
 			ImGui::UpdatePlatformWindows();
 			ImGui::RenderPlatformWindowsDefault();
 		}
 	}
+	//백 버퍼에서 그린 것을 프론트 버퍼에 출력
 	graphics->EndScene();
 }
 
@@ -124,8 +157,11 @@ void Editor::BeginDockspace()
 		ImGuiWindowFlags_NoNavFocus;
 
 	auto viewport = ImGui::GetMainViewport();
-	ImVec2 offset = ImVec2(0.0f, _Editor::menu_bar->GetHeight() + _Editor::tool_bar->GetHeight());
 
+	//widgets[0]: Menu_Bar, widgets[1]: Tool_Bar
+	ImVec2 offset = ImVec2(0.0f, widgets[0]->GetHeight() + widgets[1]->GetHeight());
+
+	//Menu_Bar와 Tool_Bar바의 영역을 빼고 나머지 영역에 GUI를 그림 
 	ImGui::SetNextWindowPos(viewport->Pos + offset);
 	ImGui::SetNextWindowSize(viewport->Size - offset);
 	ImGui::SetNextWindowViewport(viewport->ID);
@@ -143,6 +179,7 @@ void Editor::BeginDockspace()
 		ImGui::DockBuilderRemoveNode(id);
 		ImGui::DockBuilderAddNode(id, ImGuiDockNodeFlags_None);
 
+		//각 위치에 GUI 레이아웃 배치
 		auto main = id;
 		auto right = ImGui::DockBuilderSplitNode(main, ImGuiDir_Right, 0.4f, nullptr, &main);
 		auto down = ImGui::DockBuilderSplitNode(main, ImGuiDir_Down, 0.3f, nullptr, &main);

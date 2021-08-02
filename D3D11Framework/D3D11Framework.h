@@ -58,6 +58,9 @@ typedef unsigned long ulong;
 #include "Math/Plane.h"
 #include "Math/Frustum.h"
 
+//Smart Pointer
+#include <memory>
+
 //Utility
 #include "Utility/GUID_Generator.h"
 #include "Utility/Geometry_Generator.h"

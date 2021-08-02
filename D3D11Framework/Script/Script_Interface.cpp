@@ -39,7 +39,6 @@ void Script_Interface::RegisterEnumerations()
 	script_engine->RegisterEnumValue("ComponentType", "Renderable", static_cast<uint>(ComponentType::Renderable));
 	script_engine->RegisterEnumValue("ComponentType", "Script", static_cast<uint>(ComponentType::Script));
 	script_engine->RegisterEnumValue("ComponentType", "Transform", static_cast<uint>(ComponentType::Transform));
-	script_engine->RegisterEnumValue("ComponentType", "RigidBody", static_cast<uint>(ComponentType::RigidBody));
 
 	// KeyCode
 	script_engine->RegisterEnum("KeyCode");

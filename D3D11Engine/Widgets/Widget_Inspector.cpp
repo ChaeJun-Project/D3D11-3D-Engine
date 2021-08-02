@@ -17,7 +17,7 @@ namespace Inspector_Data
 	static float column = 140.0f;
 	static float max_width = 100.0f;
 
-	inline void ComponentMenuPopup(const std::string& popup_id, const std::shared_ptr<IComponent>& component, const bool& is_removeable)
+	inline void ComponentMenuPopup(const std::string& popup_id, const ComponentType& component_type, const std::shared_ptr<IComponent>& component, const bool& is_removeable)
 	{
 		if (ImGui::BeginPopup(popup_id.c_str()))
 		{
@@ -25,23 +25,27 @@ namespace Inspector_Data
 			{
 				if (ImGui::MenuItem("Remove"))
 				{
-					//TODO:
+					if (auto actor = Editor_Helper::GetInstance()->selected_actor.lock())
+					{
+						if (actor->RemoveComponent(component_type))
+						{
+							LOG_INFO_F("Remove %s Component in '%s' Object", popup_id.c_str(), actor->GetName().c_str());
+						}
+
+						else
+						{
+							LOG_ERROR_F("Fail to Remove %s Component in '%s' Object", popup_id.c_str(), actor->GetName().c_str());
+						}
+
+					}
 				}
-			}
-
-			if (ImGui::MenuItem("Copy Component"))
-				copied_component = component;
-
-			if (ImGui::MenuItem("Paste Component"))
-			{
-				//TODO:
 			}
 
 			ImGui::EndPopup();
 		}
 	}
 
-	inline const bool ComponentBegin(const std::string& name, const IconType& type, const std::shared_ptr<IComponent>& component, const bool& is_option = true, const bool& is_removeable = true)
+	inline const bool ComponentBegin(const std::string& name, const IconType& type, const ComponentType& component_type, const std::shared_ptr<IComponent>& component, const bool& is_option = true, const bool& is_removeable = true)
 	{
 		const auto collapsed_header = ImGui::CollapsingHeader(name.c_str(), ImGuiTreeNodeFlags_AllowItemOverlap | ImGuiTreeNodeFlags_DefaultOpen);
 
@@ -58,6 +62,7 @@ namespace Inspector_Data
 		{
 			ImGui::SameLine(ImGui::GetWindowContentRegionWidth() - 15.0f);
 			ImGui::SetCursorPosY(original_pen_y);
+
 			if (Icon_Provider::Get().ImageButton(name.c_str(), IconType::Button_Option, 12.0f))
 			{
 				Inspector_Data::popup_name = name;
@@ -65,8 +70,8 @@ namespace Inspector_Data
 			}
 
 			if (Inspector_Data::popup_name == name)
-				//메뉴 생성
-				ComponentMenuPopup(Inspector_Data::popup_name, component, is_removeable);
+				//Component 관리 메뉴 생성
+				ComponentMenuPopup(Inspector_Data::popup_name, component_type, component, is_removeable);
 		}
 
 		return collapsed_header;
@@ -91,19 +96,19 @@ void Widget_Inspector::Render()
 {
 	ImGui::PushItemWidth(Inspector_Data::max_width);
 
-	if (auto actor = Editor_Helper::Get().selected_actor.lock())
+	if (auto actor = Editor_Helper::GetInstance()->selected_actor.lock())
 	{
 		auto transform = actor->GetComponent<Transform>();
 		ShowTransform(transform);
 
+		auto material = actor->GetComponent<Renderable>()->GetMaterial();
+		ShowMaterial(material);
+
 		auto light = actor->GetComponent<Light>();
 		ShowLight(light);
 
-		auto renderable = actor->GetComponent<Renderable>();
-		ShowRenderable(renderable);
-
-		auto terrain = actor->GetComponent<Terrain>();
-		ShowTerrain(terrain);
+		/*auto terrain = actor->GetComponent<Terrain>();
+		ShowTerrain(terrain);*/
 
 		auto animator = actor->GetComponent<Animator>();
 		ShowAnimation(animator);
@@ -128,7 +133,7 @@ void Widget_Inspector::ShowTransform(std::shared_ptr<class Transform>& transform
 	if (!transform)
 		return;
 
-	if (Inspector_Data::ComponentBegin("Transform", IconType::Component_Transform, transform, true, false))
+	if (Inspector_Data::ComponentBegin("Transform", IconType::Component_Transform, ComponentType::Transform, transform, false, false))
 	{
 		auto position = transform->GetTranslation();
 		auto rotation = transform->GetRotation().ToEulerAngle();
@@ -172,12 +177,150 @@ void Widget_Inspector::ShowTransform(std::shared_ptr<class Transform>& transform
 	Inspector_Data::ComponentEnd();
 }
 
+void Widget_Inspector::ShowMaterial(std::shared_ptr<class Material>& material) const
+{
+	if (!material)
+		return;
+
+	if (Inspector_Data::ComponentBegin("Material", IconType::Component_Material, ComponentType::Unknown, nullptr, false, false))
+	{
+		auto roughness = material->GetRoughnessCoefficient();
+		auto metallic = material->GetMetallicCoefficient();
+		auto normal = material->GetNormalCoefficient();
+		auto height = material->GetHeightCoefficient();
+		auto uv_offset = material->GetOffset();
+		auto uv_tiling = material->GetTiling();
+		material_color_picker->SetColor(material->GetAlbedoColor());
+
+		const auto albedo_texture = material->GetTexture(TextureType::Albedo);
+		const auto roughness_texture = material->GetTexture(TextureType::Roughness);
+		const auto metallic_texture = material->GetTexture(TextureType::Metallic);
+		const auto normal_texture = material->GetTexture(TextureType::Normal);
+		const auto height_texture = material->GetTexture(TextureType::Height);
+		const auto occlusion_texture = material->GetTexture(TextureType::Occlusion);
+		const auto emissive_texture = material->GetTexture(TextureType::Emissive);
+		const auto mask_texture = material->GetTexture(TextureType::Mask);
+
+		const auto show_texture_slot = [&material](const char* name, const std::shared_ptr<ITexture>& texture, const TextureType& type)
+		{
+			ImGui::TextUnformatted(name);
+			ImGui::SameLine(70.0f);
+			ImGui::Image
+			(
+				texture ? texture->GetShaderResourceView() : nullptr,
+				ImVec2(80.0f, 80.0f),
+				ImVec2(0.0f, 0.0f),
+				ImVec2(1.0f, 1.0f),
+				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+				ImColor(1.0f, 1.0f, 1.0f, 0.5f)
+			);
+
+			//Drag Drop Event
+			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
+			{
+				try
+				{
+					if (const auto resource = Editor_Helper::GetInstance()->resource_manager->Load<Texture2D>(std::get<const char*>(payload->data)))
+						material->SetTexture(type, resource);
+				}
+				catch (const std::bad_variant_access& error)
+				{
+					LOG_ERROR_F("%s", error.what());
+				}
+			}
+
+			//Remove Button
+			if (material->HasTexture(type))
+			{
+				ImGui::SameLine();
+				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 30.0f);
+				if (Icon_Provider::Get().ImageButton(name, IconType::Button_Remove, 15.0f))
+					material->SetTexture(type, std::shared_ptr<ITexture>());
+			}
+		};
+
+		//Albedo
+		show_texture_slot("Albedo", albedo_texture, TextureType::Albedo);
+		ImGui::SameLine();
+		material_color_picker->Update();
+
+		//Roughness
+		show_texture_slot("Roughness", roughness_texture, TextureType::Roughness);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Material_Roughness", &roughness, 0.004f, 0.0f, 1.0f);
+
+		//Metallic
+		show_texture_slot("Metallic", metallic_texture, TextureType::Metallic);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Material_Metallic", &metallic, 0.004f, 0.0f, 1.0f);
+
+		//Normal
+		show_texture_slot("Normal", normal_texture, TextureType::Normal);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Material_Normal", &normal, 0.004f, 0.0f, 1.0f);
+
+		//Height
+		show_texture_slot("Height", height_texture, TextureType::Height);
+		ImGui::SameLine();
+		ImGui::DragFloat("##Material_Height", &height, 0.004f, 0.0f, 1.0f);
+
+		//Occlusion
+		show_texture_slot("Occlusion", occlusion_texture, TextureType::Occlusion);
+
+		//Emissive
+		show_texture_slot("Emissive", emissive_texture, TextureType::Emissive);
+
+		//Mask
+		show_texture_slot("Mask", mask_texture, TextureType::Mask);
+
+		//Offset
+		ImGui::TextUnformatted("Offset");
+		ImGui::SameLine(70.0f);
+		ImGui::TextUnformatted("X");
+		ImGui::PushItemWidth(128.0f);
+		ImGui::SameLine();
+		ImGui::InputFloat("##Material_offset_x", &uv_offset.x, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::SameLine();
+		ImGui::TextUnformatted("Y");
+		ImGui::SameLine();
+		ImGui::InputFloat("##Material_offset_y", &uv_offset.y, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::PopItemWidth();
+
+		//Tiling
+		ImGui::TextUnformatted("Tiling");
+		ImGui::SameLine(70.0f);
+		ImGui::TextUnformatted("X");
+		ImGui::PushItemWidth(128.0f);
+		ImGui::SameLine();
+		ImGui::InputFloat("##Material_tiling_x", &uv_tiling.x, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::SameLine();
+		ImGui::TextUnformatted("Y");
+		ImGui::SameLine();
+		ImGui::InputFloat("##Material_tiling_y", &uv_tiling.y, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
+		ImGui::PopItemWidth();
+
+		if (!Engine::IsFlagEnabled(EngineFlags_Game))
+		{
+			if (roughness != material->GetRoughnessCoefficient()) material->SetRoughnessCoefficient(roughness);
+			if (metallic != material->GetMetallicCoefficient())  material->SetMetallicCoefficient(metallic);
+			if (normal != material->GetNormalCoefficient())    material->SetNormalCoefficient(normal);
+			if (height != material->GetHeightCoefficient())    material->SetHeightCoefficient(height);
+			if (uv_offset != material->GetOffset())               material->SetOffset(uv_offset);
+			if (uv_tiling != material->GetTiling())               material->SetTiling(uv_tiling);
+			if (material_color_picker->GetColor() != material->GetAlbedoColor())
+				material->SetAlbedoColor(material_color_picker->GetColor());
+		}
+	}
+	Inspector_Data::ComponentEnd();
+}
+
+
 void Widget_Inspector::ShowLight(std::shared_ptr<class Light>& light) const
 {
 	if (!light)
 		return;
 
-	if (Inspector_Data::ComponentBegin("Light", IconType::Component_Light, light))
+	if (Inspector_Data::ComponentBegin("Light", IconType::Component_Light, ComponentType::Light, light))
 	{
 		static std::vector<std::string> light_types
 		{
@@ -282,114 +425,86 @@ void Widget_Inspector::ShowLight(std::shared_ptr<class Light>& light) const
 	Inspector_Data::ComponentEnd();
 }
 
-void Widget_Inspector::ShowRenderable(std::shared_ptr<class Renderable>& renderable) const
-{
-	if (!renderable)
-		return;
-
-	auto mesh = renderable->GetMesh();
-	auto material = renderable->GetMaterial();
-
-	if (Inspector_Data::ComponentBegin("Renderable", IconType::Component_Renderable, renderable))
-	{
-		auto mesh_name = mesh ? mesh->GetResourceName() : NOT_ASSIGNED_STR;
-		auto material_name = material ? material->GetResourceName() : NOT_ASSIGNED_STR;
-
-		//Mesh
-		ImGui::TextUnformatted("Mesh");
-		ImGui::SameLine(120.0f);
-		ImGui::InputText("##mesh", &mesh_name, ImGuiInputTextFlags_ReadOnly);
-
-		//Material
-		ImGui::TextUnformatted("Material");
-		ImGui::SameLine(120.0f);
-		ImGui::InputText("##material", &material_name, ImGuiInputTextFlags_ReadOnly);
-	}
-	Inspector_Data::ComponentEnd();
-
-	ShowMaterial(material);
-}
-
-void Widget_Inspector::ShowTerrain(std::shared_ptr<class Terrain>& terrain) const
-{
-	if (!terrain)
-		return;
-
-	if (Inspector_Data::ComponentBegin("Terrain", IconType::Component_Terrain, terrain))
-	{
-		auto texture = terrain->GetHeightMap();
-		auto min_y = terrain->GetMinY();
-		auto max_y = terrain->GetMaxY();
-		auto progress = terrain->GetProgress();
-
-		ImGui::BeginGroup();
-		{
-			ImGui::TextUnformatted("Height map");
-			ImGui::SameLine(90.0f);
-			ImGui::Image
-			(
-				texture ? texture->GetShaderResourceView() : nullptr,
-				ImVec2(80.0f, 80.0f),
-				ImVec2(0.0f, 0.0f),
-				ImVec2(1.0f, 1.0f),
-				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-				ImVec4(1.0f, 1.0f, 1.0f, 0.5f)
-			);
-
-			//Drag Drop Event
-			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
-			{
-				try
-				{
-					if (const auto resource = Editor_Helper::Get().resource_manager->Load<Texture2D>(std::get<const char*>(payload->data)))
-						terrain->SetHeightMap(resource);
-
-				}
-				catch (const std::bad_variant_access& error)
-				{
-					LOG_ERROR_F("%s", error.what());
-				}
-			}
-
-			//Remove button
-			if (terrain->HasHeightMap())
-			{
-				ImGui::SameLine();
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 30.0f);
-				if (Icon_Provider::Get().ImageButton("Terrain HeightMap", IconType::Button_Remove, 15.0f))
-					terrain->SetHeightMap(std::shared_ptr<Texture2D>());
-			}
-
-			if (ImGui::Button("Generate", ImVec2(83.0f, 0.0f)))
-				terrain->Generate();
-		}
-		ImGui::EndGroup();
-
-		ImGui::SameLine();
-
-		ImGui::BeginGroup();
-		{
-			ImGui::InputFloat("Min Y", &min_y);
-			ImGui::InputFloat("Max Y", &max_y);
-
-			if (progress > 0.0f && progress < 1.0f)
-			{
-				ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
-				ImGui::TextUnformatted(terrain->GetProgressState().c_str());
-			}
-		}
-		ImGui::EndGroup();
-
-		if (!Engine::IsFlagEnabled(EngineFlags_Game))
-		{
-			if (min_y != terrain->GetMinY())
-				terrain->SetMinY(min_y);
-			if (max_y != terrain->GetMaxY())
-				terrain->SetMaxY(max_y);
-		}
-	}
-	Inspector_Data::ComponentEnd();
-}
+//void Widget_Inspector::ShowTerrain(std::shared_ptr<class Terrain>& terrain) const
+//{
+//	if (!terrain)
+//		return;
+//
+//	if (Inspector_Data::ComponentBegin("Terrain", IconType::Component_Terrain, ComponentType::Terrain, terrain, true, true))
+//	{
+//		auto texture = terrain->GetHeightMap();
+//		auto min_y = terrain->GetMinY();
+//		auto max_y = terrain->GetMaxY();
+//		auto progress = terrain->GetProgress();
+//
+//		ImGui::BeginGroup();
+//		{
+//			ImGui::TextUnformatted("Height map");
+//			ImGui::SameLine(90.0f);
+//			ImGui::Image
+//			(
+//				texture ? texture->GetShaderResourceView() : nullptr,
+//				ImVec2(80.0f, 80.0f),
+//				ImVec2(0.0f, 0.0f),
+//				ImVec2(1.0f, 1.0f),
+//				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+//				ImVec4(1.0f, 1.0f, 1.0f, 0.5f)
+//			);
+//
+//			//Drag Drop Event
+//			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
+//			{
+//				try
+//				{
+//					if (const auto resource = Editor_Helper::GetInstance()->resource_manager->Load<Texture2D>(std::get<const char*>(payload->data)))
+//						terrain->SetHeightMap(resource);
+//
+//				}
+//				catch (const std::bad_variant_access& error)
+//				{
+//					LOG_ERROR_F("%s", error.what());
+//				}
+//			}
+//
+//			//Remove button
+//			if (terrain->HasHeightMap())
+//			{
+//				ImGui::SameLine();
+//				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 30.0f);
+//				if (Icon_Provider::Get().ImageButton("Terrain HeightMap", IconType::Button_Remove, 15.0f))
+//					terrain->SetHeightMap(std::shared_ptr<Texture2D>());
+//			}
+//
+//			if (ImGui::Button("Generate", ImVec2(83.0f, 0.0f)))
+//				terrain->Generate();
+//		}
+//		ImGui::EndGroup();
+//
+//		ImGui::SameLine();
+//
+//		ImGui::BeginGroup();
+//		{
+//			ImGui::InputFloat("Min Y", &min_y);
+//			ImGui::InputFloat("Max Y", &max_y);
+//
+//			if (progress > 0.0f && progress < 1.0f)
+//			{
+//				ImGui::ProgressBar(progress, ImVec2(0.0f, 0.0f));
+//				ImGui::TextUnformatted(terrain->GetProgressState().c_str());
+//			}
+//		}
+//		ImGui::EndGroup();
+//
+//		if (!Engine::IsFlagEnabled(EngineFlags_Game))
+//		{
+//			if (min_y != terrain->GetMinY())
+//				terrain->SetMinY(min_y);
+//			if (max_y != terrain->GetMaxY())
+//				terrain->SetMaxY(max_y);
+//		}
+//	}
+//	Inspector_Data::ComponentEnd();
+//}
 
 void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 {
@@ -397,12 +512,12 @@ void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 	if (!animator)
 		return;
 
-	if (Inspector_Data::ComponentBegin("Animation", IconType::Component_Animator, animator))
+	if (Inspector_Data::ComponentBegin("Animation", IconType::Component_Animator, ComponentType::Animator, animator, true, true))
 	{
 		//현재 선택된 엑터의 이름을 저장
-		auto actor_name = Editor_Helper::Get().selected_actor.lock()->GetName();
+		auto actor_name = Editor_Helper::GetInstance()->selected_actor.lock()->GetName();
 		//ResourceManager에 현재 선택된 엑터와 같은 이름을 가진 모델이 존재한다면 수행
-		if (auto actor_model = Editor_Helper::Get().resource_manager->GetResourceFromName<Model>(actor_name))
+		if (auto actor_model = Editor_Helper::GetInstance()->resource_manager->GetResourceFromName<Model>(actor_name))
 		{
 			if (ImGui::Button("Animation List"))
 			{
@@ -421,7 +536,7 @@ void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 				}
 				ImGui::EndPopup();
 			}
-			
+
 			//Add Animation버튼을 누른 횟수만큼 Animation Editor를 보여줌
 			for (int i = 0; i < actor_model->GetAnimationCount(); ++i)
 			{
@@ -459,9 +574,9 @@ void Widget_Inspector::ShowAddAnimationButton()
 		if (ImGui::Button("Add Animation"))
 		{
 			//현재 선택된 엑터의 이름을 저장
-			auto actor_name = Editor_Helper::Get().selected_actor.lock()->GetName();
+			auto actor_name = Editor_Helper::GetInstance()->selected_actor.lock()->GetName();
 			//선택된 엑터와 같은 이름을 가진 모델을 저장
-			auto actor_model = Editor_Helper::Get().resource_manager->GetResourceFromName<Model>(actor_name);
+			auto actor_model = Editor_Helper::GetInstance()->resource_manager->GetResourceFromName<Model>(actor_name);
 
 			uint animation_count = actor_model->GetAnimationCount();
 			animation_count++; //애니메이션을 추가할 칸을 증가
@@ -470,149 +585,12 @@ void Widget_Inspector::ShowAddAnimationButton()
 	}
 }
 
-void Widget_Inspector::ShowMaterial(std::shared_ptr<class Material>& material) const
-{
-	if (!material)
-		return;
-
-	if (Inspector_Data::ComponentBegin("Material", IconType::Component_Material, nullptr, false))
-	{
-		auto roughness = material->GetRoughnessCoefficient();
-		auto metallic = material->GetMetallicCoefficient();
-		auto normal = material->GetNormalCoefficient();
-		auto height = material->GetHeightCoefficient();
-		auto uv_offset = material->GetOffset();
-		auto uv_tiling = material->GetTiling();
-		material_color_picker->SetColor(material->GetAlbedoColor());
-
-		const auto albedo_texture = material->GetTexture(TextureType::Albedo);
-		const auto roughness_texture = material->GetTexture(TextureType::Roughness);
-		const auto metallic_texture = material->GetTexture(TextureType::Metallic);
-		const auto normal_texture = material->GetTexture(TextureType::Normal);
-		const auto height_texture = material->GetTexture(TextureType::Height);
-		const auto occlusion_texture = material->GetTexture(TextureType::Occlusion);
-		const auto emissive_texture = material->GetTexture(TextureType::Emissive);
-		const auto mask_texture = material->GetTexture(TextureType::Mask);
-
-		const auto show_texture_slot = [&material](const char* name, const std::shared_ptr<ITexture>& texture, const TextureType& type)
-		{
-			ImGui::TextUnformatted(name);
-			ImGui::SameLine(70.0f);
-			ImGui::Image
-			(
-				texture ? texture->GetShaderResourceView() : nullptr,
-				ImVec2(80.0f, 80.0f),
-				ImVec2(0.0f, 0.0f),
-				ImVec2(1.0f, 1.0f),
-				ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-				ImColor(1.0f, 1.0f, 1.0f, 0.5f)
-			);
-
-			//Drag Drop Event
-			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
-			{
-				try
-				{
-					if (const auto resource = Editor_Helper::Get().resource_manager->Load<Texture2D>(std::get<const char*>(payload->data)))
-						material->SetTexture(type, resource);
-				}
-				catch (const std::bad_variant_access& error)
-				{
-					LOG_ERROR_F("%s", error.what());
-				}
-			}
-
-			//Remove Button
-			if (material->HasTexture(type))
-			{
-				ImGui::SameLine();
-				ImGui::SetCursorPosX(ImGui::GetCursorPosX() - 30.0f);
-				if (Icon_Provider::Get().ImageButton(name, IconType::Button_Remove, 15.0f))
-					material->SetTexture(type, std::shared_ptr<ITexture>());
-			}
-		};
-
-		//Albedo
-		show_texture_slot("Albedo", albedo_texture, TextureType::Albedo);
-		ImGui::SameLine();
-		material_color_picker->Update();
-
-		//Roughness
-		show_texture_slot("Roughness", roughness_texture, TextureType::Roughness);
-		ImGui::SameLine();
-		ImGui::DragFloat("##Material_Roughness", &roughness, 0.004f, 0.0f, 1.0f);
-
-		//Metallic
-		show_texture_slot("Metallic", metallic_texture, TextureType::Metallic);
-		ImGui::SameLine();
-		ImGui::DragFloat("##Material_Metallic", &metallic, 0.004f, 0.0f, 1.0f);
-
-		//Normal
-		show_texture_slot("Normal", normal_texture, TextureType::Normal);
-		ImGui::SameLine();
-		ImGui::DragFloat("##Material_Normal", &normal, 0.004f, 0.0f, 1.0f);
-
-		//Height
-		show_texture_slot("Height", height_texture, TextureType::Height);
-		ImGui::SameLine();
-		ImGui::DragFloat("##Material_Height", &height, 0.004f, 0.0f, 1.0f);
-
-		//Occlusion
-		show_texture_slot("Occlusion", occlusion_texture, TextureType::Occlusion);
-
-		//Emissive
-		show_texture_slot("Emissive", emissive_texture, TextureType::Emissive);
-
-		//Mask
-		show_texture_slot("Mask", mask_texture, TextureType::Mask);
-
-		//Offset
-		ImGui::TextUnformatted("Offset");
-		ImGui::SameLine(70.0f);
-		ImGui::TextUnformatted("X");
-		ImGui::PushItemWidth(128.0f);
-		ImGui::SameLine();
-		ImGui::InputFloat("##Material_offset_x", &uv_offset.x, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
-		ImGui::SameLine();
-		ImGui::TextUnformatted("Y");
-		ImGui::SameLine();
-		ImGui::InputFloat("##Material_offset_y", &uv_offset.y, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
-		ImGui::PopItemWidth();
-
-		//Tiling
-		ImGui::TextUnformatted("Tiling");
-		ImGui::SameLine(70.0f);
-		ImGui::TextUnformatted("X");
-		ImGui::PushItemWidth(128.0f);
-		ImGui::SameLine();
-		ImGui::InputFloat("##Material_tiling_x", &uv_tiling.x, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
-		ImGui::SameLine();
-		ImGui::TextUnformatted("Y");
-		ImGui::SameLine();
-		ImGui::InputFloat("##Material_tiling_y", &uv_tiling.y, 0.01f, 0.1f, "%.2f", ImGuiInputTextFlags_CharsDecimal);
-		ImGui::PopItemWidth();
-
-		if (!Engine::IsFlagEnabled(EngineFlags_Game))
-		{
-			if (roughness != material->GetRoughnessCoefficient()) material->SetRoughnessCoefficient(roughness);
-			if (metallic != material->GetMetallicCoefficient())  material->SetMetallicCoefficient(metallic);
-			if (normal != material->GetNormalCoefficient())    material->SetNormalCoefficient(normal);
-			if (height != material->GetHeightCoefficient())    material->SetHeightCoefficient(height);
-			if (uv_offset != material->GetOffset())               material->SetOffset(uv_offset);
-			if (uv_tiling != material->GetTiling())               material->SetTiling(uv_tiling);
-			if (material_color_picker->GetColor() != material->GetAlbedoColor())
-				material->SetAlbedoColor(material_color_picker->GetColor());
-		}
-	}
-	Inspector_Data::ComponentEnd();
-}
-
 void Widget_Inspector::ShowScript(std::shared_ptr<class Script>& script) const
 {
 	if (!script)
 		return;
 
-	if (Inspector_Data::ComponentBegin(script->GetScriptName(), IconType::Component_Script, script))
+	if (Inspector_Data::ComponentBegin(script->GetScriptName(), IconType::Component_Script, ComponentType::Script, script, true, true))
 	{
 		auto script_name = script->GetScriptName();
 
@@ -644,7 +622,7 @@ void Widget_Inspector::ShowAudioSource(std::shared_ptr<class AudioSource>& audio
 	if (!audio_source)
 		return;
 
-	if (Inspector_Data::ComponentBegin("AudioSource", IconType::Component_AudioSource, audio_source))
+	if (Inspector_Data::ComponentBegin("AudioSource", IconType::Component_AudioSource, ComponentType::AudioSource, audio_source, true, true))
 	{
 		auto audio_clip_name = audio_source->GetAudioClipName();
 		auto is_playing = audio_source->IsPlaying();
@@ -716,7 +694,7 @@ void Widget_Inspector::ShowAudioListener(std::shared_ptr<class AudioListener>& a
 	if (!audio_listener)
 		return;
 
-	if (Inspector_Data::ComponentBegin("AudioListener", IconType::Component_AudioListener, audio_listener))
+	if (Inspector_Data::ComponentBegin("AudioListener", IconType::Component_AudioListener, ComponentType::AudioListener, audio_listener, true, true))
 	{
 
 	}
@@ -739,9 +717,9 @@ void Widget_Inspector::ShowComponentPopup()
 {
 	if (ImGui::BeginPopup("##ComponentPopup"))
 	{
-		if (auto actor = Editor_Helper::Get().selected_actor.lock())
+		if (auto actor = Editor_Helper::GetInstance()->selected_actor.lock())
 		{
-		    //Light
+			//Light
 			if (ImGui::BeginMenu("Light"))
 			{
 				if (ImGui::MenuItem("Directional"))

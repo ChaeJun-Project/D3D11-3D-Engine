@@ -10,12 +10,9 @@ enum class ComponentType : uint
 	Script,
 	Terrain,
 	Light,
-	Collider,
 	AudioSource,
 	AudioListener,
 	Animator,
-	RigidBody,
-	Constraint,
 };
 
 class IComponent :public D3D11_Object

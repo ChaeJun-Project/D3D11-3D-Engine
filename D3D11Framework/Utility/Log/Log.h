@@ -46,7 +46,8 @@ public:
 		std::is_same<T, unsigned long long>::value ||
 		std::is_same<T, float>::value ||
 		std::is_same<T, double>::value ||
-		std::is_same<T, long double>::value>::type>
+		std::is_same<T, long double>::value||
+		std::is_same<T, std::string>::value>::type>
 		static void Write(const T& value, const LogType& type)
 	{
 		Write(std::to_string(value), type);

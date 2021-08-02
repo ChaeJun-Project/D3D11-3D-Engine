@@ -13,6 +13,9 @@ public:
 		//subsystems의 데이터 중 가장 나중에 들어온 데이터(rbegin)부터 차례대로 메모리 해제를 함
 		for (auto iter = subsystems.rbegin(); iter != subsystems.rend(); iter++)
 			SAFE_DELETE(*iter);
+
+		subsystems.clear();
+		subsystems.shrink_to_fit();
 	}
 
 	auto Initialize_Subsystems() -> const bool

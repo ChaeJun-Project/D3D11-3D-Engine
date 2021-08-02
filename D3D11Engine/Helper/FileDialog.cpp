@@ -22,7 +22,7 @@ FileDialog::FileDialog(Context * context, const FileDialogType & type, const Fil
 	, is_windowed(is_windowed)
 {
 	title = OPERATION_NAME;
-	current_directory = Editor_Helper::Get().resource_manager->GetAssetDirectory();
+	current_directory = Editor_Helper::GetInstance()->resource_manager->GetAssetDirectory();
 }
 
 void FileDialog::SetOperation(const FileDialogOperation & operation)

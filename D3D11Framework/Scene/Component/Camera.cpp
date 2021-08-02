@@ -21,14 +21,14 @@ void Camera::OnUpdate()
 {
 	if (!Engine::IsFlagEnabled(EngineFlags_Game))
 	{
-		auto rotation = transform->GetRotation().ToEulerAngle();
+		auto rotation = transform->GetRotation().ToEulerAngle(); //카메라 회전 값
 		rotation.z = 0.0f;
 
-		auto right = transform->GetRight();
-		auto up = transform->GetUp();
-		auto forward = transform->GetForward();
+		auto right = transform->GetRight(); //카메라의 오른 방향 벡터
+		auto up = transform->GetUp(); //카메라의 위쪽 방향 벡터
+		auto forward = transform->GetForward(); //카메라의 정면 방향 벡터
 
-		if (input->BtnPress(KeyCode::CLICK_RIGHT))
+		if (input->BtnPress(KeyCode::CLICK_RIGHT)) //마우스 오른쪽 버튼을 눌렀을 때만 움직임
 		{
 			if (input->KeyPress(KeyCode::KEY_W))
 				movement_speed += forward * accelation*timer->GetDeltaTimeSec();
@@ -48,11 +48,14 @@ void Camera::OnUpdate()
 			else if (input->KeyPress(KeyCode::KEY_Q))
 				movement_speed -= up * accelation*timer->GetDeltaTimeSec();
 
+			//카메라 위치 변경
 			transform->Translate(movement_speed);
 			movement_speed *= drag;
 
+			//마우스 휠 동작 값
 			auto delta = input->GetMouseMoveValue();
 
+			//마우스 휠로 카메라 회전
 			//마우스 휠의 움직임이라 서로 반대 좌표가 들어가야 함.
 			rotation.x += delta.y*0.1f;
 			rotation.y += delta.x*0.1f;
@@ -60,8 +63,8 @@ void Camera::OnUpdate()
 			transform->SetRotation(Quaternion::QuaternionFromEulerAngle(rotation));
 		}
 	}
-	UpdateViewMatrix();
-	UpdateProjectionMatrix();
+	UpdateViewMatrix(); //뷰 행렬(메트릭스) 업데이트
+	UpdateProjectionMatrix(); //투영 행렬(메트릭스) 업데이트
 
 	frustum = Frustum(view, proj, renderer->IsReverseZ() ? near_plane : far_plane);
 }

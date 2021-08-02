@@ -9,7 +9,8 @@ extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND, uint, WPARAM, LPARAM);
 //실제로 D3D11Engine에 관련된 window 메세지를 처리함
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
-    Window::Create(hInstance, 1280, 720);
+    //윈도우창 생성
+    Window::Create(hInstance, 1920, 1080);
     Window::Show();
 
     Settings::Get().SetWindowInstance(hInstance);
@@ -21,8 +22,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpszCmdP
     auto editor = std::make_unique<Editor>();
 
 	Window::editor_input_event = ImGui_ImplWin32_WndProcHandler;
-	Window::game_input_event=Input::MouseProc;
-	Window::resize_event       = [&editor](const uint& width, const uint& height)
+	Window::game_input_event   = Input::MouseProc;
+	Window::resize_event	   = [&editor](const uint& width, const uint& height)
 	{
 		if (editor)
 		{

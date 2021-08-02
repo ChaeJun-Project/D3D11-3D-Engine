@@ -29,7 +29,7 @@ void ScriptEditor::Initialize(Context * context)
 {
 	this->context=context;
 	ScriptEditor_Data::editor.SetLanguageDefinition(TextEditor::LanguageDefinition::AngelScript());
-	current_directory = Editor_Helper::Get().resource_manager->GetAssetDirectory() + "Script/";
+	current_directory = Editor_Helper::GetInstance()->resource_manager->GetAssetDirectory() + "Script/";
 	//SetScript("./ImGui/Source/imconfig.h");
 
 	//auto language2 = TextEditor::LanguageDefinition::CPlusPlus();

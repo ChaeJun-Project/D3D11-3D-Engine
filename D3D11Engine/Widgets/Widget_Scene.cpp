@@ -52,19 +52,19 @@ void Widget_Scene::ShowFrame()
 	);
 
 	if (ImGui::IsMouseClicked(0) && ImGui::IsItemHovered())
-		Editor_Helper::Get().Picking();
+		Editor_Helper::GetInstance()->Picking();
 
 	if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Model))
-		Editor_Helper::Get().LoadModel(std::get<const char*>(payload->data));
+		Editor_Helper::GetInstance()->LoadModel(std::get<const char*>(payload->data));
 }
 
 void Widget_Scene::ShowTransformGizmo()
 {
-	if (Editor_Helper::Get().selected_actor.expired())
+	if (Editor_Helper::GetInstance()->selected_actor.expired())
 		return;
 
 	auto camera = renderer->GetCamera();
-	auto transform = Editor_Helper::Get().selected_actor.lock()->GetTransform();
+	auto transform = Editor_Helper::GetInstance()->selected_actor.lock()->GetTransform();
 
 	if (!camera || !transform)
 		return;
