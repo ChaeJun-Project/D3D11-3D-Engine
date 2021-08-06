@@ -11,7 +11,7 @@ public:
 		class Actor* actor,
 		class Transform* transform
 	);
-	~Renderable()=default;
+	~Renderable() = default;
 
 	void OnStart() override;
 	void OnUpdate() override;
@@ -20,8 +20,8 @@ public:
 	//=================================================================================================
 	// [Material]
 	//=================================================================================================
-	auto GetMaterial() const -> const std::shared_ptr<Material>& {return material;}
-	void SetMaterial(const std::shared_ptr<Material>& material) {this->material=material;}
+	auto GetMaterial() const -> const std::shared_ptr<Material>& { return material; }
+	void SetMaterial(const std::shared_ptr<Material>& material) { this->material = material; }
 	void SetMaterial(const std::string& path);
 	void SetStandardMaterial();
 	auto HasMaterial() const -> const bool { return material != nullptr; }
@@ -48,8 +48,8 @@ public:
 	void SetHasAnimation(const bool& has_animation) { this->has_animation = has_animation; }
 
 private:
-   std::shared_ptr<Material> material;
-   std::shared_ptr<Mesh> mesh;
-   BoundBox aabb;
-   bool has_animation = false;
-}; 
+	std::shared_ptr<Material> material;
+	std::shared_ptr<Mesh> mesh;
+	BoundBox aabb;
+	bool has_animation = false;
+};

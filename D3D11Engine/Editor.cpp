@@ -51,14 +51,14 @@ Editor::Editor()
 	ScriptEditor::Get().Initialize(context);
 
 	//Add GUI Widgets
-	widgets.emplace_back(std::make_unique<Widget_MenuBar>(context));	 //Menu_Bar
-	widgets.emplace_back(std::make_unique<Widget_ToolBar>(context));	 //Tool_Bar
-	widgets.emplace_back(std::make_unique<Widget_Console>(context));	 //Console(Log)
-	widgets.emplace_back(std::make_unique<Widget_Hierarchy>(context));	 //Hierarchy
-	widgets.emplace_back(std::make_unique<Widget_Inspector>(context));	 //Inspector
-	widgets.emplace_back(std::make_unique<Widget_Project>(context));	 //Project
-	widgets.emplace_back(std::make_unique<Widget_Scene>(context));		 //Scene
-	widgets.emplace_back(std::make_unique<Widget_ProgressBar>(context)); //Progress
+	widgets_map.insert(std::make_pair(WidgetType::Console, std::make_unique<Widget_Console>(context)));			//Console(Log)
+	widgets_map.insert(std::make_pair(WidgetType::Hierarchy, std::make_unique<Widget_Hierarchy>(context)));		//Hierarchy
+	widgets_map.insert(std::make_pair(WidgetType::Inspector, std::make_unique<Widget_Inspector>(context)));		//Inspector
+	widgets_map.insert(std::make_pair(WidgetType::MenuBar, std::make_unique<Widget_MenuBar>(context)));			//MenuBar
+	widgets_map.insert(std::make_pair(WidgetType::ProgressBar, std::make_unique<Widget_ProgressBar>(context))); //ProgressBar
+	widgets_map.insert(std::make_pair(WidgetType::Project, std::make_unique<Widget_Project>(context)));			//Project
+	widgets_map.insert(std::make_pair(WidgetType::Scene, std::make_unique<Widget_Scene>(context)));				//Scene
+	widgets_map.insert(std::make_pair(WidgetType::ToolBar, std::make_unique<Widget_ToolBar>(context)));			//ToolBar
 }
 
 Editor::~Editor()
@@ -68,12 +68,14 @@ Editor::~Editor()
 	ImGui::DestroyContext();
 
 	//widgets 벡터 요소 메모리 해제 및 벡터 클리어
-	for (auto& widget : widgets)
+	for (auto& widget : widgets_map)
 	{
-		widget.release();
+		widget.second.release();
 	}
-	widgets.clear();
-	widgets.shrink_to_fit();
+	widgets_map.clear();
+
+	std::map<WidgetType, std::unique_ptr<class IWidget>> empty_map;
+	widgets_map.swap(empty_map); //widgets_map의 Capacity 제거
 
 	//context는 engine 객체 소멸시 메모리 해제됨
 	//graphics는 context 객체 소멸시 메모리 해제됨
@@ -114,11 +116,11 @@ void Editor::Render()
 			BeginDockspace();   //도킹 시작
 
 			//GUI Render
-			for (const auto& widget : widgets)
+			for (const auto& widget : widgets_map)
 			{
-				widget->Begin();
-				widget->Render();
-				widget->End();
+				widget.second->Begin();
+				widget.second->Render();
+				widget.second->End();
 			}
 
 			ScriptEditor::Get().Render(); //ScriptEditor Render
@@ -158,8 +160,7 @@ void Editor::BeginDockspace()
 
 	auto viewport = ImGui::GetMainViewport();
 
-	//widgets[0]: Menu_Bar, widgets[1]: Tool_Bar
-	ImVec2 offset = ImVec2(0.0f, widgets[0]->GetHeight() + widgets[1]->GetHeight());
+	ImVec2 offset = ImVec2(0.0f, widgets_map[WidgetType::MenuBar]->GetHeight() + widgets_map[WidgetType::ToolBar]->GetHeight());
 
 	//Menu_Bar와 Tool_Bar바의 영역을 빼고 나머지 영역에 GUI를 그림 
 	ImGui::SetNextWindowPos(viewport->Pos + offset);
@@ -186,11 +187,11 @@ void Editor::BeginDockspace()
 		auto right_right = ImGui::DockBuilderSplitNode(right, ImGuiDir_Right, 0.5f, nullptr, &right);
 		auto down_right = ImGui::DockBuilderSplitNode(down, ImGuiDir_Right, 0.5f, nullptr, &down);
 
-		ImGui::DockBuilderDockWindow("Hierarchy", main);
-		ImGui::DockBuilderDockWindow("Scene", right);
-		ImGui::DockBuilderDockWindow("Inspector", right_right);
-		ImGui::DockBuilderDockWindow("Project", down);
-		ImGui::DockBuilderDockWindow("Log", down_right);
+		ImGui::DockBuilderDockWindow(widgets_map[WidgetType::Hierarchy]->GetWidgetTitle(), main);
+		ImGui::DockBuilderDockWindow(widgets_map[WidgetType::Scene]->GetWidgetTitle(), right);
+		ImGui::DockBuilderDockWindow(widgets_map[WidgetType::Inspector]->GetWidgetTitle(), right_right);
+		ImGui::DockBuilderDockWindow(widgets_map[WidgetType::Project]->GetWidgetTitle(), down);
+		ImGui::DockBuilderDockWindow(widgets_map[WidgetType::Console]->GetWidgetTitle(), down_right);
 		ImGui::DockBuilderFinish(id);
 	}
 	ImGui::DockSpace(id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);

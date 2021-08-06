@@ -10,7 +10,6 @@ Camera::Camera(Context * context, Actor * actor, Transform * transform)
 	renderer = context->GetSubsystem<Renderer>();
 	input = context->GetSubsystem<Input>();
 	timer = context->GetSubsystem<Timer>();
-
 }
 
 void Camera::OnStart()

@@ -10,11 +10,13 @@
 Scene::Scene(Context * context)
 	: context(context)
 {
-    SUBSCRIBE_TO_EVENT(EventType::Scene_Refresh, [this]() {is_added=true;});
+   name = "New Scene";
+
+   SUBSCRIBE_TO_EVENT(EventType::Scene_Refresh, [this]() {is_added=true;});
    
    renderer = context->GetSubsystem<Renderer>();
    
-   CreateCamera("Main Camera");
+   CreateCamera("MainCamera");
 }
 
 Scene::~Scene()

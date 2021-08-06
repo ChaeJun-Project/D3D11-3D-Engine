@@ -4,14 +4,11 @@
 enum class TextureType : uint
 {
 	Unknown,
-	Albedo,
-	Roughness,
-	Metallic,
-	Normal,
-	Height,
-	Occlusion,
-	Emissive,
-	Mask,
+	Albedo, //입체감 없는 단순한 색
+	Roughness, //표면의 거친정도
+	Metallic, //표면이 얼마나 금속같은 지
+	Normal, //표면의 입체감을 표현
+	Height, //표면의 y값을 이미지 파일로 저장한 것
 };
 
 enum class ShadingMode : uint

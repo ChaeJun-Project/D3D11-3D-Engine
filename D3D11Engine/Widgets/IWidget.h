@@ -1,6 +1,21 @@
 #pragma once
 #include "stdafx.h"
 
+enum class WidgetType : uint
+{
+   Console,
+   Hierarchy,
+   Inspector,
+   MenuBar,
+   ProgressBar,
+   Project,
+   Scene,
+   ToolBar
+};
+
+//GUI의 각각의 요소를 Widget(위젯)이라 부름
+//이를 차용하여 모든 GUI에 IWidget 인터페이스 클래스를 상속시키고
+//Widget_을 접두사로 네이밍
 class IWidget
 {
 public:
@@ -31,6 +46,8 @@ public:
 		height = ImGui::GetWindowHeight();
 		ImGui::End();
 	}
+
+	auto GetWidgetTitle() const -> const char* { return title.c_str(); }
 
 	auto GetHeight() const -> const float& { return height; }
 

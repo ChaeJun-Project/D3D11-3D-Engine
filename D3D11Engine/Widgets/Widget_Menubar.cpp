@@ -4,6 +4,7 @@
 Widget_MenuBar::Widget_MenuBar(Context * context)
 	: IWidget(context)
 {
+	title = "MenuBar";
 }
 
 void Widget_MenuBar::Render()

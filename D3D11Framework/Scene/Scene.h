@@ -31,7 +31,7 @@ private:
    class Renderer* renderer = nullptr;
    class ResourceManager* resource_manager = nullptr;
 
-   std::string name=NOT_ASSIGNED_STR;
+   std::string name = NOT_ASSIGNED_STR;
    bool is_editor_mode=true;
    bool is_added=false;
 

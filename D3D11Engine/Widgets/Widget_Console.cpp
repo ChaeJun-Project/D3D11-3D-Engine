@@ -17,7 +17,7 @@ namespace Console_Data
 Widget_Console::Widget_Console(Context * context)
 	: IWidget(context)
 {
-	title = "Log";
+	title = "Console";
 
 	logger = std::make_shared<Engine_Logger>();
 	logger->SetCallBack([this](const Log_pair & log_pair) { AddLog(log_pair); });

@@ -11,6 +11,7 @@ public:
 	~Widget_Inspector() = default;
 
 	//매 프레임 렌더링
+	//Inspector 요소(Component)는 매 프레임 렌더링을 해줘야 함
 	void Render() override;
 
 private:
@@ -33,4 +34,6 @@ private:
 	//ColorPicker: ImGui에서 지원해주는 색상 선택 팝업
     std::unique_ptr<ColorPicker> material_color_picker;
 	std::unique_ptr<ColorPicker> light_color_picker;
+
+	float max_width = 100.0f;
 };

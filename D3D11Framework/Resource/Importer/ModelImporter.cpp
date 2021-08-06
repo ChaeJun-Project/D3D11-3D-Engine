@@ -480,11 +480,7 @@ auto ModelImporter::LoadMaterial(aiMaterial * assimp_material, const ModelParame
 	//AMBIENT : 자신이 가지고 있는 고유 색
 	load_texture(aiTextureType_AMBIENT, TextureType::Metallic);
 	load_texture(aiTextureType_NORMALS, TextureType::Normal);
-	//Occlusion: 방향성을 가지지 않는 그림자
-	load_texture(aiTextureType_LIGHTMAP, TextureType::Occlusion);
-	load_texture(aiTextureType_EMISSIVE, TextureType::Emissive);
 	load_texture(aiTextureType_HEIGHT, TextureType::Height);
-	load_texture(aiTextureType_OPACITY, TextureType::Mask);
 
 	return material;
 }

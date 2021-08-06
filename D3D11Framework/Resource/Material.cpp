@@ -34,9 +34,6 @@ void Material::SetStandardShader()
 	if (HasTexture(TextureType::Metallic))  shader_flags |= Shader_Flags_Metallic;
 	if (HasTexture(TextureType::Normal))    shader_flags |= Shader_Flags_Normal;
 	if (HasTexture(TextureType::Height))    shader_flags |= Shader_Flags_Height;
-	if (HasTexture(TextureType::Occlusion)) shader_flags |= Shader_Flags_Occlusion;
-	if (HasTexture(TextureType::Emissive))  shader_flags |= Shader_Flags_Emissive;
-	if (HasTexture(TextureType::Mask))      shader_flags |= Shader_Flags_Mask;
 
 	shader = Standard_Shader::GetMatching_StandardShader(context, shader_flags);
 }
@@ -62,9 +59,6 @@ auto Material::GetTextureShaderResources() -> std::vector<ID3D11ShaderResourceVi
 		GetTextureShaderResource(TextureType::Metallic),
 		GetTextureShaderResource(TextureType::Normal),
 		GetTextureShaderResource(TextureType::Height),
-		GetTextureShaderResource(TextureType::Occlusion),
-		GetTextureShaderResource(TextureType::Emissive),
-		GetTextureShaderResource(TextureType::Mask),
 	};
 
 	return shader_resources;

@@ -64,41 +64,49 @@ void Widget_Scene::ShowTransformGizmo()
 		return;
 
 	auto camera = renderer->GetCamera();
-	auto transform = Editor_Helper::GetInstance()->selected_actor.lock()->GetTransform();
+	auto actor = Editor_Helper::GetInstance()->selected_actor.lock();
 
-	if (!camera || !transform)
-		return;
+	//Scene에 카메라가 있고 선택된 actor에 카메라 컴퍼넌트가 없는 경우
+	if (camera && !actor->GetComponent<Camera>())
+	{
+		auto transform = actor->GetTransform();
 
-	static ImGuizmo::OPERATION operation(ImGuizmo::TRANSLATE);
-	static ImGuizmo::MODE mode(ImGuizmo::WORLD);
+		if (!transform)
+			return;
 
-	if (ImGui::IsKeyPressed(87)) //w
-		operation = ImGuizmo::TRANSLATE;
-	if (ImGui::IsKeyPressed(69)) //e
-		operation = ImGuizmo::ROTATE;
-	if (ImGui::IsKeyPressed(82)) //r
-		operation = ImGuizmo::SCALE;
+		static ImGuizmo::OPERATION operation(ImGuizmo::TRANSLATE);
+		static ImGuizmo::MODE mode(ImGuizmo::WORLD);
 
-	auto offset = renderer->GetEditorOffset();
-	auto size = renderer->GetResolution();
-	auto view = camera->GetViewMatrix().Transpose();
-	auto proj = camera->GetProjectionMatrix().Transpose();
-	auto world = transform->GetWorldMatrix().Transpose();
+		if (ImGui::IsKeyPressed(87)) //w
+			operation = ImGuizmo::TRANSLATE;
+		if (ImGui::IsKeyPressed(69)) //e
+			operation = ImGuizmo::ROTATE;
+		if (ImGui::IsKeyPressed(82)) //r
+			operation = ImGuizmo::SCALE;
 
-	ImGuizmo::SetDrawlist();
-	ImGuizmo::SetRect(offset.x, offset.y, size.x, size.y);
-	ImGuizmo::Manipulate
-	(
-		view,
-		proj,
-		operation,
-		mode,
-		world
-	);
+		auto offset = renderer->GetEditorOffset();
+		auto size = renderer->GetResolution();
+		auto view = camera->GetViewMatrix().Transpose();
+		auto proj = camera->GetProjectionMatrix().Transpose();
+		auto world = transform->GetWorldMatrix().Transpose();
 
-	world.Transpose();
+		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetRect(offset.x, offset.y, size.x, size.y);
+		ImGuizmo::Manipulate
+		(
+			view,
+			proj,
+			operation,
+			mode,
+			world
+		);
 
-	transform->SetTranslation(world.GetTranslation());
-	transform->SetRotation(world.GetRotation());
-	transform->SetScale(world.GetScale());
+		world.Transpose();
+
+		transform->SetTranslation(world.GetTranslation());
+		transform->SetRotation(world.GetRotation());
+		transform->SetScale(world.GetScale());
+	}
+
+	return;
 }

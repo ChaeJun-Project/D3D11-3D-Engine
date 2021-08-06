@@ -5,8 +5,8 @@
 Widget_ProgressBar::Widget_ProgressBar(Context * context)
 :IWidget(context)
 {
-   title="Hold On.....";
-   size=ImVec2(500.0f,83.0f);
+   title = "Progress...";
+   size = ImVec2(500.0f,83.0f);
    window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;
    is_visible =false;
 }

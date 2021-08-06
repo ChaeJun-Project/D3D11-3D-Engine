@@ -9,9 +9,6 @@ enum Shader_Flags : uint
 	Shader_Flags_Roughness = 1U << 2,
 	Shader_Flags_Metallic = 1U << 3,
 	Shader_Flags_Height = 1U << 4,
-	Shader_Flags_Occlusion = 1U << 5,
-	Shader_Flags_Emissive = 1U << 6,
-	Shader_Flags_Mask = 1U << 7,
 };
 
 class Standard_Shader final
