@@ -34,8 +34,8 @@ public:
 	void CreateBuffers(const D3D11_USAGE& usage = D3D11_USAGE_IMMUTABLE);
 
 private:
-  D3D11_PRIMITIVE_TOPOLOGY primitive_topology=D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-  MeshType mesh_type=MeshType::Custom;
+  D3D11_PRIMITIVE_TOPOLOGY primitive_topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+  MeshType mesh_type = MeshType::Custom;
   std::shared_ptr<VertexBuffer> vertex_buffer;
   std::shared_ptr<IndexBuffer> index_buffer;
 };

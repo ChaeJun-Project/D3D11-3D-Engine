@@ -161,9 +161,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Core\Context.h" />
-    <ClInclude Include="Core\D3D11Graphics\BasicData\D3D11_Config.h" />
+    <ClInclude Include="Core\D3D11Graphics\BasicData\D3D11_ConstantData.h" />
     <ClInclude Include="Core\D3D11Graphics\BasicData\Geometry.h" />
     <ClInclude Include="Core\D3D11Graphics\BasicData\Vertex.h" />
+    <ClInclude Include="Core\D3D11Graphics\Command.h" />
     <ClInclude Include="Core\D3D11Graphics\CommandList.h" />
     <ClInclude Include="Core\D3D11Graphics\D3D11_Helper.h" />
     <ClInclude Include="Core\D3D11Graphics\D3D11_Object.h" />
@@ -247,6 +248,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\D3D11Graphics\BasicData\Vertex.cpp" />
+    <ClCompile Include="Core\D3D11Graphics\Command.cpp" />
     <ClCompile Include="Core\D3D11Graphics\CommandList.cpp" />
     <ClCompile Include="Core\D3D11Graphics\IA\IndexBuffer.cpp" />
     <ClCompile Include="Core\D3D11Graphics\IA\InputLayout.cpp" />

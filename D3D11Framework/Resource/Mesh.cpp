@@ -35,10 +35,10 @@ void Mesh::SetMeshType(const MeshType & mesh_type)
 void Mesh::CreateBuffers(const D3D11_USAGE& usage)
 {
     if(!vertex_buffer)
-	  vertex_buffer=std::make_shared<VertexBuffer>(context);
+	  vertex_buffer = std::make_shared<VertexBuffer>(context);
     
 	if(!index_buffer)
-	   index_buffer=std::make_shared<IndexBuffer>(context);
+	   index_buffer = std::make_shared<IndexBuffer>(context);
 
 	switch (mesh_type)
 	{

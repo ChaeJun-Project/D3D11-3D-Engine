@@ -35,10 +35,30 @@ inline void ConstantBuffer::Create(const D3D11_USAGE & usage)
 	//버퍼의 접근에 관련된 flag
 	switch (usage)
 	{
+		//GPU에 의해서 읽고 쓰기 접근이 가능
+		//CPU 접근 불가
 	case D3D11_USAGE_DEFAULT:
-	case D3D11_USAGE_IMMUTABLE: desc.CPUAccessFlags = 0; break;
-	case D3D11_USAGE_DYNAMIC: desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; break;
-	case D3D11_USAGE_STAGING: desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE; break;
+		break;
+
+		//GPU에 의해서 읽기 가능
+		//CPU 접근 불가
+		//해당 옵션에서는 자원 수정이 불가능
+	case D3D11_USAGE_IMMUTABLE:
+		desc.CPUAccessFlags = 0;
+		break;
+
+		//GPU에 의해서 읽기 가능
+		//CPU에서 쓰기 가능
+		//CPU에서 자원을 읽지는 못하지만 수정은 가능
+		//보통 ConstantBuffer를 만들 때 사용
+	case D3D11_USAGE_DYNAMIC:
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		break;
+
+		//GPU 메모리에서 CPU 메모리로 복사 허용
+	case D3D11_USAGE_STAGING:
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE | D3D11_CPU_ACCESS_READ;
+		break;
 	}
 
 	//constant buffer는 다른 buffer들과 다르게 D3D11_SUBRESOURCE_DATA가 필요하지않음
@@ -47,6 +67,8 @@ inline void ConstantBuffer::Create(const D3D11_USAGE & usage)
 	assert(SUCCEEDED(hr));
 }
 
+//Constant Buffer는 여러 종류가 있기 때문에 멤버함수 템플릿 사용
+//GLOBAL_DATA, TRANSFORM_DATA, MATERIAL_DATA, BLUR_DATA 등
 template<typename T>
 inline auto ConstantBuffer::Map() -> T *
 {

@@ -3,13 +3,13 @@
 
 enum class WidgetType : uint
 {
-   Console,
+   Console, 
    Hierarchy,
    Inspector,
-   MenuBar,
+   MenuBar,  
    ProgressBar,
    Project,
-   Scene,
+   Scene, 
    ToolBar
 };
 
@@ -22,6 +22,7 @@ public:
 	IWidget(class Context* context) : context(context) {}
 	virtual ~IWidget() = default;
 
+	//윈도우창(GUI) 생성
 	virtual void Begin()
 	{
 		if (!is_visible)
@@ -31,19 +32,24 @@ public:
 			ImGui::SetNextWindowSize(size);
 
 		if ((size.x != -1.0f && size.y != -1.0f) || (size_max.x != std::numeric_limits<float>::max() && size_max.y != std::numeric_limits<float>::max()))
-			ImGui::SetNextWindowSizeConstraints(size, size_max);
+			ImGui::SetNextWindowSizeConstraints(size, size_max); //윈도우창 크기 제한
 
+	    //윈도우창 생성
 		ImGui::Begin(title.c_str(), &is_visible, window_flags);
 	}
 
+	//윈도우창(GUI) 매 프레임 렌더링
 	virtual void Render() = 0;
 
+	//윈도우창(GUI) 제어 종료
 	virtual void End()
 	{
 		if (!is_visible)
 			return;
 
+	    //윈도우창의 폭(높이값)을 반환
 		height = ImGui::GetWindowHeight();
+		//윈도우창 제어 종료
 		ImGui::End();
 	}
 
@@ -56,10 +62,14 @@ public:
 
 protected:
 	class Context* context = nullptr;
+
 	std::string title = "";
+
 	ImVec2 size = ImVec2(-1.0f, -1.0f);
 	ImVec2 size_max = ImVec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+
 	float height = 0.0f;
 	int window_flags = ImGuiWindowFlags_NoCollapse;
-	bool is_visible = true;
+
+	bool is_visible = true; //생성한 윈도우창 보여주기
 };

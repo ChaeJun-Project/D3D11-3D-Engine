@@ -45,6 +45,13 @@ typedef unsigned long ulong;
 #define SAFE_DELETE(p)          { if (p) { delete (p); (p) = nullptr; } }
 #define SAFE_DELETE_ARRAY(p)    { if (p) { delete[] (p); (p) = nullptr; } }
 
+//전역변수
+static const std::string NOT_ASSIGNED_STR = "N/A";
+static const std::string MODEL_BIN_EXTENSION = ".model";
+static const std::string MESH_BIN_EXTENSION = ".mesh";
+static const std::string TEXTURE_BIN_EXTENSION = ".texture";
+static const std::string MATERIAL_BIN_EXTENSION = ".material";
+
 //Math
 #include "Math/Math.h"
 #include "Math/Vector2.h"
@@ -88,7 +95,7 @@ typedef unsigned long ulong;
 #include "Core/Subsystem/Renderer.h"
 
 //Basic Data
-#include "Core/D3D11Graphics/BasicData/D3D11_Config.h"
+#include "Core/D3D11Graphics/BasicData/D3D11_ConstantData.h"
 #include "Core/D3D11Graphics/BasicData/Vertex.h"
 #include "Core/D3D11Graphics/BasicData/Geometry.h"
 

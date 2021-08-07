@@ -251,7 +251,7 @@ void Widget_Inspector::ShowMaterial(std::shared_ptr<class Material>& material) c
 				ImColor(1.0f, 1.0f, 1.0f, 0.5f)
 			);
 
-			//Drag Drop Event
+			//Drag&Drop Event
 			//Payload Data(Texture)
 			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
 			{
@@ -440,7 +440,7 @@ void Widget_Inspector::ShowLight(std::shared_ptr<class Light>& light) const
 			ImGui::PopItemWidth();
 		}
 
-		//변경된 수치 적용
+		//게임모드일 때에도 변경된 수치 적용
 		if (intensity != light->GetIntensity())				  light->SetIntensity(intensity);
 		if (is_cast_shadow != light->IsCastShadow())		  light->SetCastShadow(is_cast_shadow);
 		if (bias != light->GetBias())						  light->SetBias(bias);
@@ -481,7 +481,7 @@ void Widget_Inspector::ShowLight(std::shared_ptr<class Light>& light) const
 //				ImVec4(1.0f, 1.0f, 1.0f, 0.5f)
 //			);
 //
-//			//Drag Drop Event
+//			//Drag&Drop Event
 //			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Texture))
 //			{
 //					if (const auto resource = Editor_Helper::GetInstance()->resource_manager->Load<Texture2D>(std::get<const char*>(payload->data)))
@@ -534,6 +534,7 @@ void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 	if (!animator.get())
 		return;
 
+	//Animation 컴퍼넌트 요소 박스 만들기 
 	if (Inspector_Data::ComponentBegin("Animation", IconType::Component_Animator, ComponentType::Animator, animator, true, true))
 	{
 		//현재 선택된 엑터의 이름을 저장
@@ -551,6 +552,7 @@ void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 				for (int i = 0; i < animator->GetAnimationCount(); ++i)
 				{
 					auto animation_name = animator->GetAnimationName(i);
+					//애니메이션 리스트에서 클릭한 애니메이션을 현재 애니메이션 상태로 변경 
 					if (ImGui::MenuItem(animation_name.c_str()))
 					{
 						animator->SetCurrentAnimation(animation_name);
@@ -573,16 +575,18 @@ void Widget_Inspector::ShowAnimation(std::shared_ptr<class Animator>& animator)
 				//게임모드가 아닐 경우(편집모드)에만 사용가능
 				if (!Engine::IsFlagEnabled(EngineFlags_Game))
 				{
-					//애니메이션 추가
+					//Drag&Drop Event
+			        //Payload Data(Animation)
 					if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Model))
 					{
-						actor_model->LoadFromFile(std::get<const char*>(payload->data));
+						actor_model->LoadFromFile(std::get<const char*>(payload->data)); //Load Payload(Animation)
 					}
 				}
 			}
 		}
 		ShowAddAnimationButton();
 	}
+	//컴퍼넌트를 구분할 구분 선 그리기
 	Inspector_Data::ComponentEnd();
 }
 
@@ -612,6 +616,7 @@ void Widget_Inspector::ShowScript(std::shared_ptr<class Script>& script) const
 	if (!script.get())
 		return;
 
+	//Script 컴퍼넌트 요소 박스 만들기 
 	if (Inspector_Data::ComponentBegin(script->GetScriptName(), IconType::Component_Script, ComponentType::Script, script, true, true))
 	{
 		auto script_name = script->GetScriptName();
@@ -623,19 +628,24 @@ void Widget_Inspector::ShowScript(std::shared_ptr<class Script>& script) const
 		{
 			ImGui::InputText("", &script_name, ImGuiInputTextFlags_ReadOnly);
 
+			//Drag&Drop Event
+			//Payload Data(Script)
 			if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Script))
-				script->SetScript(std::get<const char*>(payload->data));
+				script->SetScript(std::get<const char*>(payload->data)); //Set Payload(Script) 
 
 			ImGui::SameLine();
+
+			//편집 버튼을 누르면
 			if (ImGui::Button("Edit"))
 			{
 				ScriptEditor::Get().SetScript(script->GetScriptPath());
-				ScriptEditor::Get().SetVisible(true);
+				ScriptEditor::Get().SetVisible(true); //스크립트 보여주기
 			}
 		}
 		ImGui::PopItemWidth();
 		ImGui::PopID();
 	}
+	//컴퍼넌트를 구분할 구분 선 그리기
 	Inspector_Data::ComponentEnd();
 }
 
@@ -644,17 +654,18 @@ void Widget_Inspector::ShowAudioSource(std::shared_ptr<class AudioSource>& audio
 	if (!audio_source.get())
 		return;
 
+	//AudioSource 컴퍼넌트 요소 박스 만들기 
 	if (Inspector_Data::ComponentBegin("AudioSource", IconType::Component_AudioSource, ComponentType::AudioSource, audio_source, true, true))
 	{
 		auto audio_clip_name = audio_source->GetAudioClipName();
-		auto is_playing = audio_source->IsPlaying();
-		auto is_loop = audio_source->IsLoop();
-		auto is_mute = audio_source->IsMute();
-		auto priority = audio_source->GetPriority();
-		auto volume = audio_source->GetVolume();
-		auto pitch = audio_source->GetPitch();
-		auto pan = audio_source->GetPan();
-
+		auto is_playing = audio_source->IsPlaying(); //해당 음원이 재생 중인지
+		auto is_loop = audio_source->IsLoop();		 //해당 음원의 재생이 끝나고 다시 처음부터 재생시킬지
+		auto is_mute = audio_source->IsMute();		 //해당 음원을 중지 시킬지
+		auto priority = audio_source->GetPriority(); //해당 음원의 우선순위(낮을 수록 높은 우선 순위를 가짐)
+		auto volume = audio_source->GetVolume();	 //해당 음원의 볼륨 값
+		auto pitch = audio_source->GetPitch();		 //해당 음원의 음의 높낮이
+		auto pan = audio_source->GetPan();			 //해당 음원의 좌우 위치에서 들리는 각각의 소리를 조절하여 특정 위치에서 들리는 듯한 느낌을 주는 옵션 (범위: -1 ~ 1)
+		 
 		//Audio Clip
 		ImGui::TextUnformatted("Audio Clip");
 		ImGui::SameLine(140.0f);
@@ -662,8 +673,10 @@ void Widget_Inspector::ShowAudioSource(std::shared_ptr<class AudioSource>& audio
 		ImGui::InputText("##AudioClipName", &audio_clip_name, ImGuiInputTextFlags_ReadOnly);
 		ImGui::PopItemWidth();
 
+		//Drag&Drop Event
+		//Payload Data(Audio)
 		if (auto payload = DragDropEvent::ReceiveDragDropPayload(PayloadType::Audio))
-			audio_source->SetAudioClip(std::get<const char*>(payload->data));
+			audio_source->SetAudioClip(std::get<const char*>(payload->data)); //Set Payload(Audio) 
 
 		//Playing
 		ImGui::TextUnformatted("Is Playing");
@@ -700,6 +713,7 @@ void Widget_Inspector::ShowAudioSource(std::shared_ptr<class AudioSource>& audio
 		ImGui::SameLine(140.0f);
 		ImGui::SliderFloat("##AudioPan", &pan, -1.0f, 1.0f);
 
+		//게임모드일 때에도 변경된 수치 적용
 		if (is_playing != audio_source->IsPlaying())   audio_source->SetPlaying(is_playing);
 		if (is_loop != audio_source->IsLoop())      audio_source->SetLoop(is_loop);
 		if (is_mute != audio_source->IsMute())      audio_source->SetMute(is_mute);
@@ -708,6 +722,7 @@ void Widget_Inspector::ShowAudioSource(std::shared_ptr<class AudioSource>& audio
 		if (pitch != audio_source->GetPitch())    audio_source->SetPitch(pitch);
 		if (pan != audio_source->GetPan())      audio_source->SetPan(pan);
 	}
+	//컴퍼넌트를 구분할 구분 선 그리기
 	Inspector_Data::ComponentEnd();
 }
 
@@ -716,10 +731,9 @@ void Widget_Inspector::ShowAudioListener(std::shared_ptr<class AudioListener>& a
 	if (!audio_listener.get())
 		return;
 
-	if (Inspector_Data::ComponentBegin("AudioListener", IconType::Component_AudioListener, ComponentType::AudioListener, audio_listener, true, true))
-	{
-
-	}
+	//AudioListener 컴퍼넌트 요소 박스 만들기 
+	Inspector_Data::ComponentBegin("AudioListener", IconType::Component_AudioListener, ComponentType::AudioListener, audio_listener, true, true);
+	//컴퍼넌트를 구분할 구분 선 그리기
 	Inspector_Data::ComponentEnd();
 }
 
@@ -744,29 +758,29 @@ void Widget_Inspector::ShowComponentPopup()
 			//Light
 			if (ImGui::BeginMenu("Light"))
 			{
-				if (ImGui::MenuItem("Directional"))
+				if (ImGui::MenuItem("Directional")) //Directional
 					actor->AddComponent<Light>()->SetLightType(LightType::Directional);
-				if (ImGui::MenuItem("Point"))
+				if (ImGui::MenuItem("Point")) //Point
 					actor->AddComponent<Light>()->SetLightType(LightType::Point);
-				if (ImGui::MenuItem("Spot"))
+				if (ImGui::MenuItem("Spot")) //Spot
 					actor->AddComponent<Light>()->SetLightType(LightType::Spot);
 				ImGui::EndMenu();
 			}
 
 			//Animation
-			if (ImGui::MenuItem("Animation"))
+			if (ImGui::MenuItem("Animation")) //Animation
 				actor->AddComponent<Animator>();
 
 			//Script
-			if (ImGui::MenuItem("Script"))
+			if (ImGui::MenuItem("Script")) //Script
 				actor->AddComponent<Script>();
 
 			//Audio
 			if (ImGui::BeginMenu("Audio"))
 			{
-				if (ImGui::MenuItem("AudioSource"))
+				if (ImGui::MenuItem("AudioSource")) //AudioSource
 					actor->AddComponent<AudioSource>();
-				if (ImGui::MenuItem("AudioListener"))
+				if (ImGui::MenuItem("AudioListener")) //AudioListener
 					actor->AddComponent<AudioListener>();
 				ImGui::EndMenu();
 			}

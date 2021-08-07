@@ -70,9 +70,10 @@ inline void Shader::AddShader(const std::string path, const std::string & functi
 
 	//Create Shader
 	auto shader_scope= DeduceShaderScope<T>();
-	//i: iterator, b: bool
-	auto pair_ib=shaders.insert(std::make_pair(shader_scope,std::make_shared<T>(context)));
-	auto shader=std::static_pointer_cast<T>(pair_ib.first->second);
+	//insert에 성공하면 pair_ib<iterator, bool> 반환
+	//iterator는 map 데이터를 참조하는 반복자, bool은 map에 데이터 삽입 성공여부
+	auto pair_ib = shaders.insert(std::make_pair(shader_scope,std::make_shared<T>(context)));
+	auto shader = std::static_pointer_cast<T>(pair_ib.first->second);
 
 	if(pair_ib.second)
 	     shader->Create(path, function_name, profile, shader_macros.data());
