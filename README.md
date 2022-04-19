@@ -29,6 +29,9 @@ chaw109@naver.com
 # [유튜브 영상 URL]
 https://youtu.be/gToq3WTeZrw
 
+![image](https://user-images.githubusercontent.com/39609369/163959636-39f4f817-4171-4206-993e-9c626804d20a.png)
+
+
 # [라이브러리 및 리소스 파일]
 https://drive.google.com/file/d/1hy3TYsPovSSN0ya31rJpRdXOg0cUs33R/view?usp=sharing
 
